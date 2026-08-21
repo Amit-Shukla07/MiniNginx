@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MiniNginx - Secondary Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="content">
+        <h1>Secondary Page</h1>
+        <p class="subtitle">Served via HTTP/1.1 Persistent Keep-Alive.</p>
+        <p>This second page was served over the existing TCP connection without needing a new socket handshake!</p>
+
+        <div class="diagram">
+            <h3>Keep-Alive Flow</h3>
+            <pre>
+TCP Connection (Established)
+  ↓
+GET / ➔ 200 OK (index.html)
+  ↓
+GET /test.html ➔ 200 OK (Reused TCP Socket)
+  ↓
+Connection kept open
+            </pre>
+        </div>
+
+        <p><a href="index.html">← Back to home page</a></p>
+    </div>
+</body>
+</html>
