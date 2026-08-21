@@ -1,0 +1,24 @@
+# Build directories
+build/
+bin/
+lib/
+out/
+.cache/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs and test outputs
+logs/*.log
+benchmarks/results/*.json
+benchmarks/results/*.csv
+
+# Temporary files
+*.o
+*.a
+*.dylib
+*.so

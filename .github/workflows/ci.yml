@@ -1,0 +1,92 @@
+name: MiniNginx CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }} (${{ matrix.build_type }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_type: [Release, Debug]
+        include:
+          - os: ubuntu-latest
+            compiler: g++-12
+          - os: macos-latest
+            compiler: clang++
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Linux Compiler
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-12 cmake ninja-build python3
+          echo "CXX=g++-12" >> $GITHUB_ENV
+
+      - name: Setup macOS Environment
+        if: runner.os == 'macOS'
+        run: |
+          brew install cmake ninja
+          echo "CXX=clang++" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DMININGINX_BUILD_TESTS=ON
+
+      - name: Build All Targets
+        run: cmake --build build -j
+
+      - name: Run Unit Tests (CTest)
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Run HTTP Parser Fuzz Tests
+        run: ./build/mininginx_fuzz_parser 10000
+
+      - name: Run Server Live Integration Tests
+        run: python3 tests/integration/test_server_integration.py
+
+  sanitizers:
+    name: ${{ matrix.os }} Sanitizers (ASan + UBSan)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Linux Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake python3
+          echo "CXX=clang++" >> $GITHUB_ENV
+
+      - name: Configure with ASan & UBSan
+        run: |
+          cmake -B build/asan \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DMININGINX_ENABLE_ASAN=ON \
+            -DMININGINX_BUILD_TESTS=ON
+
+      - name: Build Sanitized Targets
+        run: cmake --build build/asan -j
+
+      - name: Run Unit Tests under ASan
+        run: ctest --test-dir build/asan --output-on-failure
+
+      - name: Run Integration Tests under ASan
+        run: python3 tests/integration/test_server_integration.py
