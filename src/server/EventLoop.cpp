@@ -1,9 +1,9 @@
-#include "EventLoop.hpp"
+#include "../../include/server/EventLoop.hpp"
 
 #ifdef __APPLE__
-#include "../platform/KqueueEventLoop.hpp"
+#include "../../platform/KqueueEventLoop.hpp"
 #elif defined(__linux__)
-#include "../platform/EpollEventLoop.hpp"
+#include "../../platform/EpollEventLoop.hpp"
 #endif
 
 std::unique_ptr<EventLoop> EventLoop::create() {

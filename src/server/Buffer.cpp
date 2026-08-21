@@ -1,4 +1,4 @@
-#include "Buffer.hpp"
+#include "../../include/server/Buffer.hpp"
 
 #include <sys/uio.h>
 #include <unistd.h>
@@ -43,13 +43,11 @@ void Buffer::ensure_writable(size_t len) {
     if (writable_bytes() >= len) return;
 
     if (writable_bytes() + reader_ >= len) {
-        // Compact readable bytes to the front
         size_t readable = readable_bytes();
         std::memmove(data_.data(), peek(), readable);
         reader_ = 0;
         writer_ = readable;
     } else {
-        // Expand buffer
         data_.resize(writer_ + len);
     }
 }

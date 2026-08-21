@@ -1,10 +1,10 @@
 #pragma once
 
+#include "../http/HttpParser.hpp"
+#include "../http/HttpRequest.hpp"
+#include "../http/HttpResponse.hpp"
 #include "Buffer.hpp"
 #include "EventLoop.hpp"
-#include "HttpParser.hpp"
-#include "HttpRequest.hpp"
-#include "HttpResponse.hpp"
 #include "Router.hpp"
 #include "Socket.hpp"
 

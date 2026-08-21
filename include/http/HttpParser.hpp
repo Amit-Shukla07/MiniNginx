@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Buffer.hpp"
+#include "../server/Buffer.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
 

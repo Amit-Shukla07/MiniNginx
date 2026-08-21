@@ -1,4 +1,4 @@
-#include "Router.hpp"
+#include "../../include/server/Router.hpp"
 
 #include <fstream>
 
@@ -51,7 +51,6 @@ std::optional<std::filesystem::path> Router::resolve_safe_path(std::string_view 
         canonical_target /= "index.html";
     }
 
-    // Security check: Must reside within canonical document root
     std::string root_str = canonical_root_.lexically_normal().string();
     std::string target_str = canonical_target.lexically_normal().string();
 

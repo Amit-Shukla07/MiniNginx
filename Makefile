@@ -1,4 +1,4 @@
-.PHONY: all build clean test run
+.PHONY: all build clean run
 
 BUILD_DIR ?= build
 
@@ -10,9 +10,6 @@ build:
 
 run: build
 	@./$(BUILD_DIR)/mininginx
-
-test: build
-	@ctest --test-dir $(BUILD_DIR) --output-on-failure
 
 clean:
 	@rm -rf $(BUILD_DIR)

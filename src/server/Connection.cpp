@@ -1,4 +1,4 @@
-#include "Connection.hpp"
+#include "../../include/server/Connection.hpp"
 
 #include <unistd.h>
 #include <cerrno>
@@ -66,7 +66,6 @@ void Connection::handle_read() {
             process_request();
         }
     } else if (n == 0) {
-        // EOF from client
         close();
     } else {
         if (saved_errno != EAGAIN && saved_errno != EWOULDBLOCK && saved_errno != EINTR) {
@@ -108,7 +107,6 @@ void Connection::handle_write() {
             reset_for_next_request();
             loop_->modify(socket_.fd(), EVENT_READ);
 
-            // Check if client pipelined next request
             if (!readBuffer_.empty()) {
                 if (parser_.parse(readBuffer_) && parser_.is_complete()) {
                     process_request();

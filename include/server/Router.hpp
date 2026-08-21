@@ -1,10 +1,9 @@
 #pragma once
 
-#include "HttpRequest.hpp"
-#include "HttpResponse.hpp"
+#include "../http/HttpRequest.hpp"
+#include "../http/HttpResponse.hpp"
 
 #include <filesystem>
-#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>

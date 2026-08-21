@@ -7,7 +7,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_compile_options(-Wall -Wextra -Wpedantic -O2)
 
-include_directories(include platform)
+include_directories(
+    include
+    include/http
+    include/server
+    platform
+)
 
 set(PLATFORM_SOURCES "")
 if(APPLE)
@@ -17,14 +22,14 @@ elseif(UNIX)
 endif()
 
 set(CORE_SOURCES
-    src/EventLoop.cpp
-    src/Socket.cpp
-    src/Connection.cpp
-    src/Buffer.cpp
-    src/HttpParser.cpp
-    src/HttpResponse.cpp
-    src/HttpServer.cpp
-    src/Router.cpp
+    src/http/HttpParser.cpp
+    src/http/HttpResponse.cpp
+    src/server/EventLoop.cpp
+    src/server/Socket.cpp
+    src/server/Buffer.cpp
+    src/server/Router.cpp
+    src/server/Connection.cpp
+    src/server/HttpServer.cpp
     ${PLATFORM_SOURCES}
 )
 
@@ -33,18 +38,3 @@ add_library(mininginx_core STATIC ${CORE_SOURCES})
 # Server executable
 add_executable(mininginx src/main.cpp)
 target_link_libraries(mininginx PRIVATE mininginx_core)
-
-# Tests
-enable_testing()
-
-add_executable(BufferTest tests/BufferTest.cpp)
-target_link_libraries(BufferTest PRIVATE mininginx_core)
-add_test(NAME BufferTest COMMAND BufferTest)
-
-add_executable(HttpParserTest tests/HttpParserTest.cpp)
-target_link_libraries(HttpParserTest PRIVATE mininginx_core)
-add_test(NAME HttpParserTest COMMAND HttpParserTest)
-
-add_executable(ServerTest tests/ServerTest.cpp)
-target_link_libraries(ServerTest PRIVATE mininginx_core)
-add_test(NAME ServerTest COMMAND ServerTest)

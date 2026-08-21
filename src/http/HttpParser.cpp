@@ -1,4 +1,4 @@
-#include "HttpParser.hpp"
+#include "../../include/http/HttpParser.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -112,7 +112,6 @@ bool HttpParser::parse_headers(Buffer& buffer) {
         }
 
         if (len == 0) {
-            // End of headers
             buffer.retrieve(2);
 
             std::string cl = request_.get_header("content-length");
