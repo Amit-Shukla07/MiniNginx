@@ -25,6 +25,7 @@ public:
     void append(std::string_view str);
 
     [[nodiscard]] const char* find_crlf() const noexcept;
+    [[nodiscard]] const char* find_eol(size_t& eol_len) const noexcept;
     [[nodiscard]] const char* find_double_crlf() const noexcept;
 
     ssize_t read_fd(int fd, int& saved_errno);

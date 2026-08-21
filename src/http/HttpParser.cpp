@@ -32,8 +32,9 @@ bool HttpParser::parse(Buffer& buffer) {
 }
 
 bool HttpParser::parse_start_line(Buffer& buffer) {
-    const char* crlf = buffer.find_crlf();
-    if (!crlf) {
+    size_t eol_len = 0;
+    const char* eol = buffer.find_eol(eol_len);
+    if (!eol) {
         if (buffer.readable_bytes() > 8192) {
             state_ = ParserState::ERROR;
             error_status_ = HttpStatus::BadRequest;
@@ -42,21 +43,21 @@ bool HttpParser::parse_start_line(Buffer& buffer) {
         return false;
     }
 
-    size_t len = static_cast<size_t>(crlf - buffer.peek());
+    size_t len = static_cast<size_t>(eol - buffer.peek());
     std::string_view line(buffer.peek(), len);
 
     size_t s1 = line.find(' ');
     size_t s2 = (s1 != std::string_view::npos) ? line.find(' ', s1 + 1) : std::string_view::npos;
 
-    if (s1 == std::string_view::npos || s2 == std::string_view::npos) {
+    if (s1 == std::string_view::npos) {
         state_ = ParserState::ERROR;
         error_status_ = HttpStatus::BadRequest;
         return false;
     }
 
     std::string_view m_str = line.substr(0, s1);
-    std::string_view t_str = line.substr(s1 + 1, s2 - s1 - 1);
-    std::string_view v_str = line.substr(s2 + 1);
+    std::string_view t_str = (s2 != std::string_view::npos) ? line.substr(s1 + 1, s2 - s1 - 1) : line.substr(s1 + 1);
+    std::string_view v_str = (s2 != std::string_view::npos) ? line.substr(s2 + 1) : "HTTP/1.1";
 
     HttpMethod m = string_to_method(m_str);
     if (m == HttpMethod::UNKNOWN) {
@@ -85,15 +86,16 @@ bool HttpParser::parse_start_line(Buffer& buffer) {
         request_.query.clear();
     }
 
-    buffer.retrieve(len + 2);
+    buffer.retrieve(len + eol_len);
     state_ = ParserState::HEADERS;
     return true;
 }
 
 bool HttpParser::parse_headers(Buffer& buffer) {
     while (true) {
-        const char* crlf = buffer.find_crlf();
-        if (!crlf) {
+        size_t eol_len = 0;
+        const char* eol = buffer.find_eol(eol_len);
+        if (!eol) {
             if (total_headers_len_ + buffer.readable_bytes() > 65536) {
                 state_ = ParserState::ERROR;
                 error_status_ = HttpStatus::BadRequest;
@@ -102,8 +104,8 @@ bool HttpParser::parse_headers(Buffer& buffer) {
             return false;
         }
 
-        size_t len = static_cast<size_t>(crlf - buffer.peek());
-        total_headers_len_ += (len + 2);
+        size_t len = static_cast<size_t>(eol - buffer.peek());
+        total_headers_len_ += (len + eol_len);
 
         if (total_headers_len_ > 65536) {
             state_ = ParserState::ERROR;
@@ -112,7 +114,7 @@ bool HttpParser::parse_headers(Buffer& buffer) {
         }
 
         if (len == 0) {
-            buffer.retrieve(2);
+            buffer.retrieve(eol_len);
 
             std::string cl = request_.get_header("content-length");
             if (!cl.empty()) {
@@ -155,7 +157,7 @@ bool HttpParser::parse_headers(Buffer& buffer) {
         });
 
         request_.headers[key] = std::string(val);
-        buffer.retrieve(len + 2);
+        buffer.retrieve(len + eol_len);
     }
 }
 

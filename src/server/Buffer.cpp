@@ -64,6 +64,24 @@ const char* Buffer::find_crlf() const noexcept {
     return nullptr;
 }
 
+const char* Buffer::find_eol(size_t& eol_len) const noexcept {
+    if (empty()) return nullptr;
+    const char* p = peek();
+    const char* end = p + readable_bytes();
+    for (; p < end; ++p) {
+        if (*p == '\n') {
+            if (p > peek() && *(p - 1) == '\r') {
+                eol_len = 2;
+                return p - 1;
+            }
+            eol_len = 1;
+            return p;
+        }
+    }
+    eol_len = 0;
+    return nullptr;
+}
+
 const char* Buffer::find_double_crlf() const noexcept {
     if (readable_bytes() < 4) return nullptr;
     const char* p = peek();
