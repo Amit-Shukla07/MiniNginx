@@ -2,154 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MiniNginx | High-Performance Event-Driven Web Server</title>
+    <title>MiniNginx</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="background-glow"></div>
-    <header class="navbar">
-        <div class="brand">
-            <span class="logo-icon">⚡</span>
-            <span class="logo-text">Mini<strong>Nginx</strong></span>
-            <span class="version-badge">v1.0.0</span>
+    <div class="content">
+        <h1>MiniNginx</h1>
+        <p class="subtitle">A small HTTP/1.1 server written in C++20.</p>
+        <p>This page is being served by MiniNginx using non-blocking I/O multiplexing.</p>
+
+        <div class="diagram">
+            <h3>Request Flow</h3>
+            <pre>
+Client
+  ↓
+TCP Socket
+  ↓
+kqueue (macOS) / epoll (Linux)
+  ↓
+Event Loop
+  ↓
+HTTP Parser
+  ↓
+Static File
+  ↓
+Response
+            </pre>
         </div>
-        <nav class="nav-links">
-            <a href="#stats">Live Metrics</a>
-            <a href="#features">Architecture</a>
-            <a href="#console">HTTP Console</a>
-            <a href="/api/health" target="_blank" class="api-pill">Health API</a>
-        </nav>
-    </header>
 
-    <main class="container">
-        <section class="hero">
-            <div class="hero-tag">PRODUCTION-ORIENTED SYSTEMS PROJECT</div>
-            <h1>High-Performance Event-Driven <br><span class="gradient-text">HTTP/1.1 Web Server</span></h1>
-            <p class="subtitle">Written in modern C++20 using non-blocking Unix sockets, OS-level I/O multiplexing (<span class="code-span">kqueue</span> on macOS, <span class="code-span">epoll</span> on Linux), zero-copy file transfer, and an incremental FSM parser.</p>
-            
-            <div class="hero-cta">
-                <a href="#console" class="btn btn-primary">Try HTTP Console</a>
-                <a href="/api/stats" target="_blank" class="btn btn-secondary">Raw JSON Stats</a>
-            </div>
-        </section>
-
-        <section id="stats" class="stats-section">
-            <div class="section-header">
-                <h2>Real-Time Server Metrics</h2>
-                <div class="live-indicator">
-                    <span class="pulse-dot"></span> Polling <span class="code-span">/api/stats</span>
-                </div>
-            </div>
-
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-label">Uptime</div>
-                    <div class="metric-value" id="val-uptime">0s</div>
-                    <div class="metric-sub">Server running duration</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Active Connections</div>
-                    <div class="metric-value" id="val-active-conn">0</div>
-                    <div class="metric-sub">Concurrent sockets</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Total Requests</div>
-                    <div class="metric-value highlight" id="val-requests">0</div>
-                    <div class="metric-sub">Processed HTTP requests</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">2xx Successes</div>
-                    <div class="metric-value green" id="val-2xx">0</div>
-                    <div class="metric-sub">HTTP 200/201/204</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">4xx Client Errors</div>
-                    <div class="metric-value amber" id="val-4xx">0</div>
-                    <div class="metric-sub">HTTP 400/404/413</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Bytes Transferred</div>
-                    <div class="metric-value blue" id="val-bytes">0 KB</div>
-                    <div class="metric-sub">Network I/O throughput</div>
-                </div>
-            </div>
-        </section>
-
-        <section id="features" class="features-section">
-            <div class="section-header">
-                <h2>Core Architectural Highlights</h2>
-                <p>Engineered for low latency, zero leaks, and predictable resource bounds.</p>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-box">
-                    <div class="feature-icon">🔄</div>
-                    <h3>I/O Multiplexing</h3>
-                    <p>Native kernel event demultiplexing with <strong>kqueue/kevent</strong> on Darwin and <strong>epoll</strong> on Linux, eliminating thread-per-connection overhead.</p>
-                </div>
-                <div class="feature-box">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Zero-Copy File Transfer</h3>
-                    <p>Direct kernel-space file streaming via platform-specialized <strong>sendfile()</strong> syscalls, bypassing user-space buffer copies.</p>
-                </div>
-                <div class="feature-box">
-                    <div class="feature-icon">🧩</div>
-                    <h3>Incremental FSM Parser</h3>
-                    <p>Deterministic zero-copy finite state machine supporting fragmented packets, pipelined requests, and chunked transfer encoding.</p>
-                </div>
-                <div class="feature-box">
-                    <div class="feature-icon">⏱️</div>
-                    <h3>Heap-Based Timers</h3>
-                    <p>Precise O(log N) min-heap timer manager preventing idle socket exhaustion (Slowloris attacks) and enforcing keep-alive deadlines.</p>
-                </div>
-                <div class="feature-box">
-                    <div class="feature-icon">🛡️</div>
-                    <h3>Defensive Security</h3>
-                    <p>Strict path canonicalization against directory traversal (<code>../../</code> attacks) and bounded request header/body buffers.</p>
-                </div>
-                <div class="feature-box">
-                    <div class="feature-icon">👥</div>
-                    <h3>Multi-Worker Scaling</h3>
-                    <p>Independent event-loop per worker thread with lock-free connection assignment and atomic runtime metrics aggregation.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="console" class="console-section">
-            <div class="section-header">
-                <h2>Interactive HTTP Console</h2>
-                <p>Test the server's API and routing endpoints directly from your browser.</p>
-            </div>
-
-            <div class="console-card">
-                <div class="console-controls">
-                    <select id="request-method" class="console-select">
-                        <option value="GET">GET</option>
-                        <option value="HEAD">HEAD</option>
-                    </select>
-                    <input type="text" id="request-path" class="console-input" value="/api/health">
-                    <button id="send-request-btn" class="btn btn-primary">Send Request</button>
-                </div>
-
-                <div class="console-output">
-                    <div class="output-header">
-                        <span>Response Payload</span>
-                        <span id="response-status" class="status-tag">READY</span>
-                    </div>
-                    <pre id="response-body">Click "Send Request" or test an endpoint.</pre>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <p>MiniNginx — Built with C++20, kqueue, epoll & POSIX Non-blocking Sockets.</p>
-    </footer>
-
-    <script src="app.js"></script>
+        <p><a href="test.html">Test secondary page</a></p>
+    </div>
 </body>
 </html>
