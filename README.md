@@ -1,8 +1,18 @@
 # MiniNginx
 
-A lightweight, event-driven HTTP/1.1 web server written from scratch in C++20.
+A lightweight, cross-platform, event-driven HTTP/1.1 web server written from scratch in C++20.
 
-MiniNginx demonstrates the core systems engineering principles behind production web servers: non-blocking sockets, OS-level I/O multiplexing (`kqueue` on macOS, `epoll` on Linux), incremental HTTP parsing, and persistent connections on a single-threaded event loop.
+MiniNginx demonstrates the core systems engineering principles behind production web servers: non-blocking sockets, OS-level I/O multiplexing (**kqueue** on macOS, **epoll** on Linux, **WSAPoll** on Windows), incremental HTTP parsing, and persistent connections on a single-threaded event loop.
+
+---
+
+## Supported Platforms
+
+| Platform | Multiplexer | Implementation |
+| :--- | :--- | :--- |
+| **macOS / BSD** | `kqueue` & `kevent` | `platform/KqueueEventLoop.cpp` |
+| **Linux** | `epoll` (`epoll_create1`, `epoll_wait`) | `platform/EpollEventLoop.cpp` |
+| **Windows** | `Winsock2` & `WSAPoll` | `platform/WindowsEventLoop.cpp` |
 
 ---
 
@@ -37,14 +47,17 @@ MiniNginx/
 │   └── main.cpp
 │
 ├── platform/
-│   ├── KqueueEventLoop.hpp
+│   ├── KqueueEventLoop.hpp     # macOS kqueue
 │   ├── KqueueEventLoop.cpp
-│   ├── EpollEventLoop.hpp
-│   └── EpollEventLoop.cpp
+│   ├── EpollEventLoop.hpp      # Linux epoll
+│   ├── EpollEventLoop.cpp
+│   ├── WindowsEventLoop.hpp    # Windows Winsock2 WSAPoll
+│   └── WindowsEventLoop.cpp
 │
 ├── public/
 │   ├── index.html
-│   └── style.css
+│   ├── style.css
+│   └── test.html
 │
 ├── config/
 │   └── server.conf
@@ -58,17 +71,20 @@ MiniNginx/
 ## Build & Run
 
 ### Prerequisites
-* C++20 compliant compiler (`clang++` or `g++`)
+* C++20 compliant compiler (`clang++`, `g++`, or MSVC on Windows)
 * CMake 3.20+
 
-### Build
+### Linux / macOS
 ```bash
 make build
+make run
 ```
 
-### Run
-```bash
-make run
+### Windows (PowerShell / Command Prompt)
+```cmd
+cmake -B build
+cmake --build build --config Release
+.\build\Release\mininginx.exe
 ```
 
 By default, MiniNginx listens on `0.0.0.0:8080` and serves files from `./public`.
