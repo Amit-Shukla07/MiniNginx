@@ -1,6 +1,11 @@
 #include "../../include/server/Connection.hpp"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <unistd.h>
+#endif
+
 #include <cerrno>
 #include <iostream>
 
@@ -68,9 +73,15 @@ void Connection::handle_read() {
     } else if (n == 0) {
         close();
     } else {
+#ifdef _WIN32
+        if (saved_errno != WSAEWOULDBLOCK && saved_errno != WSAEINTR) {
+            close();
+        }
+#else
         if (saved_errno != EAGAIN && saved_errno != EWOULDBLOCK && saved_errno != EINTR) {
             close();
         }
+#endif
     }
 }
 
@@ -116,9 +127,15 @@ void Connection::handle_write() {
             close();
         }
     } else if (n < 0) {
+#ifdef _WIN32
+        if (saved_errno != WSAEWOULDBLOCK && saved_errno != WSAEINTR) {
+            close();
+        }
+#else
         if (saved_errno != EAGAIN && saved_errno != EWOULDBLOCK && saved_errno != EINTR) {
             close();
         }
+#endif
     }
 }
 

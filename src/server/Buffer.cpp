@@ -1,7 +1,12 @@
 #include "../../include/server/Buffer.hpp"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <sys/uio.h>
 #include <unistd.h>
+#endif
 
 #include <algorithm>
 #include <cerrno>
@@ -95,6 +100,16 @@ const char* Buffer::find_double_crlf() const noexcept {
 }
 
 ssize_t Buffer::read_fd(int fd, int& saved_errno) {
+#ifdef _WIN32
+    ensure_writable(4096);
+    int n = ::recv(static_cast<SOCKET>(fd), begin_write(), static_cast<int>(writable_bytes()), 0);
+    if (n < 0) {
+        saved_errno = ::WSAGetLastError();
+    } else {
+        has_written(static_cast<size_t>(n));
+    }
+    return n;
+#else
     char extra_buf[65536];
     struct iovec vec[2];
     const size_t writable = writable_bytes();
@@ -116,10 +131,20 @@ ssize_t Buffer::read_fd(int fd, int& saved_errno) {
         append(extra_buf, static_cast<size_t>(n) - writable);
     }
     return n;
+#endif
 }
 
 ssize_t Buffer::write_fd(int fd, int& saved_errno) {
     if (empty()) return 0;
+#ifdef _WIN32
+    int n = ::send(static_cast<SOCKET>(fd), peek(), static_cast<int>(readable_bytes()), 0);
+    if (n < 0) {
+        saved_errno = ::WSAGetLastError();
+    } else {
+        retrieve(static_cast<size_t>(n));
+    }
+    return n;
+#else
     ssize_t n = ::write(fd, peek(), readable_bytes());
     if (n < 0) {
         saved_errno = errno;
@@ -127,4 +152,5 @@ ssize_t Buffer::write_fd(int fd, int& saved_errno) {
         retrieve(static_cast<size_t>(n));
     }
     return n;
+#endif
 }

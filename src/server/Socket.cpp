@@ -1,11 +1,18 @@
 #include "../../include/server/Socket.hpp"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+using SocketFd = SOCKET;
+#else
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
+using SocketFd = int;
+#endif
 
 #include <cerrno>
 #include <cstring>
@@ -30,12 +37,16 @@ Socket& Socket::operator=(Socket&& other) noexcept {
 }
 
 Socket Socket::create_tcp() {
-    int fd = ::socket(AF_INET, SOCK_STREAM, 0);
+    int fd = static_cast<int>(::socket(AF_INET, SOCK_STREAM, 0));
     return Socket(fd);
 }
 
 bool Socket::set_non_blocking(bool non_blocking) const {
     if (fd_ < 0) return false;
+#ifdef _WIN32
+    u_long mode = non_blocking ? 1 : 0;
+    return ::ioctlsocket(static_cast<SocketFd>(fd_), FIONBIO, &mode) == 0;
+#else
     int flags = ::fcntl(fd_, F_GETFL, 0);
     if (flags < 0) return false;
     if (non_blocking) {
@@ -44,18 +55,29 @@ bool Socket::set_non_blocking(bool non_blocking) const {
         flags &= ~O_NONBLOCK;
     }
     return ::fcntl(fd_, F_SETFL, flags) >= 0;
+#endif
 }
 
 bool Socket::set_reuse_addr(bool reuse) const {
     if (fd_ < 0) return false;
+#ifdef _WIN32
+    BOOL optval = reuse ? TRUE : FALSE;
+    return ::setsockopt(static_cast<SocketFd>(fd_), SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == 0;
+#else
     int optval = reuse ? 1 : 0;
     return ::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == 0;
+#endif
 }
 
 bool Socket::set_tcp_nodelay(bool nodelay) const {
     if (fd_ < 0) return false;
+#ifdef _WIN32
+    BOOL optval = nodelay ? TRUE : FALSE;
+    return ::setsockopt(static_cast<SocketFd>(fd_), IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&optval), sizeof(optval)) == 0;
+#else
     int optval = nodelay ? 1 : 0;
     return ::setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval)) == 0;
+#endif
 }
 
 bool Socket::bind(const std::string& host, uint16_t port) const {
@@ -74,12 +96,12 @@ bool Socket::bind(const std::string& host, uint16_t port) const {
         }
     }
 
-    return ::bind(fd_, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) == 0;
+    return ::bind(static_cast<SocketFd>(fd_), reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) == 0;
 }
 
 bool Socket::listen(int backlog) const {
     if (fd_ < 0) return false;
-    return ::listen(fd_, backlog) == 0;
+    return ::listen(static_cast<SocketFd>(fd_), backlog) == 0;
 }
 
 std::pair<Socket, std::string> Socket::accept() const {
@@ -90,10 +112,16 @@ std::pair<Socket, std::string> Socket::accept() const {
     int client_fd = -1;
 
     while (true) {
-        client_fd = ::accept(fd_, reinterpret_cast<struct sockaddr*>(&client_addr), &addr_len);
+        client_fd = static_cast<int>(::accept(static_cast<SocketFd>(fd_), reinterpret_cast<struct sockaddr*>(&client_addr), &addr_len));
         if (client_fd >= 0) break;
+#ifdef _WIN32
+        int err = ::WSAGetLastError();
+        if (err == WSAEINTR) continue;
+        return {Socket(-1), ""};
+#else
         if (errno == EINTR) continue;
         return {Socket(-1), ""};
+#endif
     }
 
     char ip_buf[INET_ADDRSTRLEN];
@@ -103,7 +131,11 @@ std::pair<Socket, std::string> Socket::accept() const {
 
 void Socket::close() {
     if (fd_ >= 0) {
+#ifdef _WIN32
+        ::closesocket(static_cast<SocketFd>(fd_));
+#else
         ::close(fd_);
+#endif
         fd_ = -1;
     }
 }
